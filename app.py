@@ -82,7 +82,7 @@ with st.sidebar:
 
     # Database selection
     db_options = {
-        "Retail Store": "/content/drive/MyDrive/text2sql_project/data/retail_sample.db"
+        "Retail Store": "data/retail_sample.db"
     }
 
     selected_db_name = st.selectbox("Choose Database:", list(db_options.keys()))
@@ -185,3 +185,4 @@ with col2:
 st.markdown("---")
 
 st.markdown("Built with ❤️ using Streamlit | [View Code on GitHub](#)")
+
