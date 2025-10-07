@@ -4,6 +4,67 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 
+def generate_sql(question):
+    """Convert natural language question to SQL """
+    q = question.lower()
+    
+    # Pattern 1: Count queries
+    if "how many" in q or "count" in q:
+        if "customer" in q:
+            return "SELECT COUNT(*) as total_customers FROM customers;"
+    
+    # Pattern 2: Top/Best queries
+    if ("top" in q or "best" in q) and ("city" in q or "cities" in q):
+        return "SELECT city, COUNT(*) as customer_count FROM customers GROUP BY city ORDER BY customer_count DESC LIMIT 10;"
+    
+    # Pattern 3: Unique/Distinct values
+    if ("what" in q or "which" in q) and ("city" in q or "cities" in q):
+        return "SELECT DISTINCT city, COUNT(*) as customer_count FROM customers GROUP BY city ORDER BY city;"
+    
+    # Pattern 4: Recent queries
+    if "recent" in q or "latest" in q:
+        return "SELECT * FROM customers ORDER BY registration_date DESC LIMIT 10;"
+    
+    # Default fallback
+    return "SELECT * FROM customers LIMIT 10;"
+
+
+def execute_sql_safely(sql_query, db_path, max_rows=100):
+    """Execute SQL queries with safety checks """
+    dangerous_keywords = ['DROP', 'DELETE', 'INSERT', 'UPDATE', 'ALTER', 'CREATE', 'TRUNCATE']
+    sql_upper = sql_query.upper()
+    
+    for keyword in dangerous_keywords:
+        if keyword in sql_upper:
+            return {
+                'success': False,
+                'error': f"Dangerous operation '{keyword}' not allowed",
+                'data': None
+            }
+    
+    try:
+        conn = sqlite3.connect(db_path)
+        if 'LIMIT' not in sql_upper:
+            sql_query = sql_query.rstrip(';') + f" LIMIT {max_rows};"
+        
+        result_df = pd.read_sql(sql_query, conn)
+        conn.close()
+        
+        return {
+            'success': True,
+            'error': None,
+            'data': result_df,
+            'row_count': len(result_df)
+        }
+    except Exception as e:
+        return {
+            'success': False,
+            'error': f"SQL Error: {str(e)}",
+            'data': None
+        }
+
+
+
 # Page config
 st.set_page_config(
     page_title="Text-to-SQL Generator",
@@ -122,4 +183,5 @@ with col2:
 
 # Footer
 st.markdown("---")
+
 st.markdown("Built with ❤️ using Streamlit | [View Code on GitHub](#)")
