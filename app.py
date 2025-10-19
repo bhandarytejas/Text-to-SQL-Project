@@ -4,30 +4,40 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 
+@st.cache_resource
+def load_model():
+    """Load AI model once and cache it"""
+    return pipeline("text2text-generation", model="cssupport/t5-small-awesome-text-to-sql")
+
 def generate_sql(question):
-    """Convert natural language question to SQL """
+    """Generate SQL using AI model"""
+    try:
+        model = load_model()
+        prompt = f"tables: customers | {question}"
+        result = model(prompt, max_length=256, do_sample=False)[0]['generated_text']
+        return result
+    except Exception as e:
+        # Fallback to rule-based if model fails
+        return generate_sql_fallback(question)
+
+def generate_sql_fallback(question):
+    """Fallback rule-based SQL generation"""
     q = question.lower()
     
-    # Pattern 1: Count queries
     if "how many" in q or "count" in q:
         if "customer" in q:
             return "SELECT COUNT(*) as total_customers FROM customers;"
     
-    # Pattern 2: Top/Best queries
     if ("top" in q or "best" in q) and ("city" in q or "cities" in q):
         return "SELECT city, COUNT(*) as customer_count FROM customers GROUP BY city ORDER BY customer_count DESC LIMIT 10;"
     
-    # Pattern 3: Unique/Distinct values
     if ("what" in q or "which" in q) and ("city" in q or "cities" in q):
         return "SELECT DISTINCT city, COUNT(*) as customer_count FROM customers GROUP BY city ORDER BY city;"
     
-    # Pattern 4: Recent queries
     if "recent" in q or "latest" in q:
         return "SELECT * FROM customers ORDER BY registration_date DESC LIMIT 10;"
     
-    # Default fallback
     return "SELECT * FROM customers LIMIT 10;"
-
 
 def execute_sql_safely(sql_query, db_path, max_rows=100):
     """Execute SQL queries with safety checks """
@@ -185,4 +195,5 @@ with col2:
 st.markdown("---")
 
 st.markdown("Built with ❤️ using Streamlit | [View Code on GitHub](#)")
+
 
