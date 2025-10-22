@@ -4,6 +4,14 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 
+# Page config
+st.set_page_config(
+    page_title="Text-to-SQL Generator",
+    page_icon="🗃️",
+    layout="wide"
+)
+
+
 @st.cache_resource
 def load_model():
     """Load AI model once and cache it"""
@@ -75,12 +83,7 @@ def execute_sql_safely(sql_query, db_path, max_rows=100):
 
 
 
-# Page config
-st.set_page_config(
-    page_title="Text-to-SQL Generator",
-    page_icon="🗃️",
-    layout="wide"
-)
+
 
 # Title
 st.title("🗃️ Text-to-SQL AI Generator")
@@ -195,5 +198,6 @@ with col2:
 st.markdown("---")
 
 st.markdown("Built with ❤️ using Streamlit | [View Code on GitHub](#)")
+
 
 
